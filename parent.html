@@ -1,0 +1,181 @@
+<!-- parent.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Parent Chore Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+<style>
+.hover-scale:hover{transform:scale(1.05)}
+.input{border:1px solid #d1d5db;border-radius:.25rem;padding:.25rem .5rem;width:100%;font-size:.875rem}
+</style>
+</head>
+<body class="bg-gray-100 p-4 min-h-screen">
+
+<!-- simple PIN auth -->
+<div id="auth" class="max-w-sm mx-auto bg-white rounded-xl p-6 shadow">
+  <h2 class="text-xl font-bold mb-4 text-center">🔒 Parent Mode</h2>
+  <input id="pin" type="password" class="input mb-4 text-center" placeholder="Enter PIN">
+  <button id="login" class="w-full py-2 bg-blue-600 text-white font-semibold rounded hover-scale">Unlock</button>
+</div>
+
+<!-- parent dashboard -->
+<div id="dash" class="hidden max-w-6xl mx-auto space-y-8">
+
+  <!-- snapshot -->
+  <section class="bg-green-50 border border-green-200 rounded-xl p-6 shadow">
+    <h2 class="text-xl font-bold mb-4">📊 Weekly Snapshot</h2>
+    <div id="snapshot" class="grid gap-4 md:grid-cols-3"></div>
+  </section>
+
+  <!-- overview -->
+  <section class="bg-white rounded-xl p-6 shadow border border-gray-200">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-2xl font-bold">👀 Overview of the week</h2>
+      <button id="reset" class="px-4 py-2 bg-red-600 text-white rounded hover-scale">🔄 Reset week</button>
+    </div>
+    <div id="table" class="overflow-x-auto"></div>
+  </section>
+
+  <!-- add chore -->
+  <section class="bg-white rounded-xl p-6 shadow border border-gray-200">
+    <h3 class="text-xl font-semibold mb-4">➕ Add new chore</h3>
+    <form id="addForm" class="grid gap-4 md:grid-cols-2">
+      <input id="cname" class="input" placeholder="🧹 Sweep patio" required>
+      <select id="ctype" class="input">
+        <option value="shared">Shared (both kids)</option>
+        <option value="personal-liam">Personal – Liam</option>
+        <option value="personal-maggie">Personal – Maggie</option>
+      </select>
+      <input id="ctarget" type="number" min="1" max="7" value="1" class="input" required>
+      <button class="bg-green-600 text-white rounded hover-scale py-2">Save chore</button>
+    </form>
+  </section>
+
+  <!-- bonus -->
+  <section class="bg-white rounded-xl p-6 shadow border border-gray-200">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-xl font-semibold">⭐ Bonus opportunities</h3>
+      <label class="flex items-center gap-2">
+        Enable <input id="bonToggle" type="checkbox" class="h-5 w-5 accent-blue-600">
+      </label>
+    </div>
+    <p id="cap" class="text-sm text-gray-600 mb-4"></p>
+    <form id="bonusForm" class="grid gap-4 md:grid-cols-2">
+      <input id="bdesc" class="input" placeholder="🍂 Rake leaves" required>
+      <input id="bval" type="number" step="0.05" min="0.1" value="0.25" class="input" required>
+      <button class="bg-purple-600 text-white rounded hover-scale py-2">Add bonus task</button>
+    </form>
+    <div id="blist" class="mt-6 space-y-2"></div>
+  </section>
+</div>
+
+<script>
+/* Firebase -------------------------------------------------------- */
+const cfg={apiKey:"AIzaSyDGzTazPvOiEhTDPg5jyIO17pfv9lCM3OI",authDomain:"chore-chart-2.firebaseapp.com",
+databaseURL:"https://chore-chart-2-default-rtdb.firebaseio.com",projectId:"chore-chart-2",
+storageBucket:"chore-chart-2.appspot.com",messagingSenderId:"881327854483",
+appId:"1:881327854483:web:b6f10033c0840a1ccb8e66"};firebase.initializeApp(cfg);
+const db=firebase.database();
+
+/* PIN auth -------------------------------------------------------- */
+const PIN="1234";
+document.getElementById('login').onclick=()=>{if(document.getElementById('pin').value===PIN){
+ document.getElementById('auth').remove();document.getElementById('dash').classList.remove('hidden');listen();}
+ else alert("Wrong PIN");};
+
+/* util ------------------------------------------------------------ */
+function deepMerge(d,r){if(!r)return structuredClone(d);const o=structuredClone(d);
+ for(const k in r){o[k]=typeof r[k]==='object'&&!Array.isArray(r[k])?deepMerge(o[k]||{},r[k]):r[k];}
+ return o;}
+const days=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const defaultData={liam:{sharedTasks:{}},maggie:{sharedTasks:{}},parentSettings:{bonusTasks:[]}};
+let data=defaultData;
+
+/* live listener --------------------------------------------------- */
+function listen(){db.ref().on('value',s=>{data=deepMerge(defaultData,s.val()||{});render();});}
+function render(){table();snapshot();bonusUI();}
+function table(){
+ let rows='';
+ function kidRows(kid,key){for(const t in kid){if(Array.isArray(kid[t])){rows+=row(key,t,kid[t]);}}
+  for(const t in kid.sharedTasks){rows+=row(key,t,kid.sharedTasks[t]);}}
+ function row(kid,chore,arr){return`<tr class="border-b"><td>${kid}</td><td>${nice(chore)}</td>
+   ${arr.map((v,i)=>`<td class="text-center">${v?'✓':''}</td>`).join('')}
+   <td class="text-center">${arr.filter(Boolean).length}</td></tr>`;}
+ function nice(k){return k.replace(/([A-Z])/g,m=>" "+m.toLowerCase()).replace(/^./,m=>m.toUpperCase());}
+ kidRows(data.liam,"Liam");kidRows(data.maggie,"Maggie");
+ document.getElementById('table').innerHTML=`<table class="min-w-full text-sm">
+ <thead class="bg-gray-50"><tr><th>Kid</th><th>Chore</th>${days.map(d=>`<th>${d}</th>`).join('')}<th>✔︎/wk</th></tr></thead>
+ <tbody>${rows}</tbody></table>`;}
+function snapshot(){
+ const count=k=>Object.values(k).filter(Array.isArray).reduce((s,a)=>s+a.filter(Boolean).length,0)+
+              Object.values(k.sharedTasks||{}).reduce((s,a)=>s+a.filter(Boolean).length,0);
+ const l=count(data.liam), m=count(data.maggie);
+ const dogL=(data.liam.sharedTasks.feedDog||[]).filter(Boolean).length,
+       dogM=(data.maggie.sharedTasks.feedDog||[]).filter(Boolean).length;
+ const champ=dogL===dogM?'🤝 Tie':dogL>dogM?'🎻 Liam':'🤸‍♀️ Maggie';
+ const req=1+5+1+1+15;
+ document.getElementById('snapshot').innerHTML=`
+  <div class="bg-white rounded p-4 shadow">
+   <h4 class="font-semibold mb-2">Total chores completed</h4>
+   Liam: <b>${l}</b><br>Maggie: <b>${m}</b><br><br>
+   ${l===m?'⚖️ Even match':l>m?'🎻 Liam leads':'🤸‍♀️ Maggie leads'}
+  </div>
+  <div class="bg-white rounded p-4 shadow">
+   <h4 class="font-semibold mb-2">🐕 Dog-feeding champ</h4>
+   Liam: <b>${dogL}</b><br>Maggie: <b>${dogM}</b><br><br>${champ}
+  </div>
+  <div class="bg-white rounded p-4 shadow">
+   <h4 class="font-semibold mb-2">Tasks until allowance</h4>
+   Liam needs <b>${Math.max(req-l,0)}</b><br>
+   Maggie needs <b>${Math.max(req-m,0)}</b>
+  </div>`;}
+/* reset week ------------------------------------------------------ */
+document.getElementById('reset').onclick=async()=>{if(!confirm("Reset all ticks?"))return;
+ const cleared=structuredClone(data);
+ ["liam","maggie"].forEach(k=>{
+  Object.keys(cleared[k]).forEach(t=>{if(Array.isArray(cleared[k][t]))cleared[k][t]=Array(7).fill(false);
+                                      if(typeof cleared[k][t]==='boolean')cleared[k][t]=false;});
+  Object.keys(cleared[k].sharedTasks).forEach(t=>cleared[k].sharedTasks[t]=Array(7).fill(false));
+ });
+ cleared.bonuses={liam:{earlyBird:Array(7).fill(false),parentHelper:[]},
+                  maggie:{earlyBird:Array(7).fill(false),parentHelper:[]}};
+ cleared.lastUpdated=new Date().toISOString();
+ await db.ref().set(cleared);};
+/* add chore ------------------------------------------------------- */
+document.getElementById('addForm').onsubmit=async e=>{
+ e.preventDefault();
+ const name=document.getElementById('cname').value.trim(),
+       type=document.getElementById('ctype').value,
+       tgt=parseInt(document.getElementById('ctarget').value,10),
+       key=name.replace(/\W+/g,'').toLowerCase();
+ const blank=Array(7).fill(false),upd={};
+ if(type==='shared'){upd[`liam/sharedTasks/${key}`]=blank;upd[`maggie/sharedTasks/${key}`]=blank;}
+ if(type==='personal-liam')upd[`liam/${key}`]=blank;
+ if(type==='personal-maggie')upd[`maggie/${key}`]=blank;
+ upd[`catalogue/${key}`]={label:name,weeklyTarget:tgt,shared:type==='shared'};
+ await db.ref().update(upd);e.target.reset();};
+/* bonus ----------------------------------------------------------- */
+function bonusUI(){
+ const ps=data.parentSettings||{};
+ document.getElementById('bonToggle').checked=!!ps.bonusOpportunitiesEnabled;
+ const tasks=ps.bonusTasks||[],tot=tasks.reduce((s,t)=>s+t.value,0);
+ document.getElementById('cap').textContent=`Current weekly bonus: $${tot.toFixed(2)} / $2.00`;
+ document.getElementById('blist').innerHTML=tasks.length?tasks.map((t,i)=>
+  `<div class="bg-gray-50 p-2 rounded flex justify-between">
+     <span>${t.desc}</span><span>$${t.value.toFixed(2)}</span>
+     <button onclick="delBonus(${i})" class="text-red-500">✖︎</button></div>`).join(''):
+  '<p class="text-sm text-gray-500">No bonus tasks.</p>';
+}
+document.getElementById('bonToggle').onchange=e=>db.ref('parentSettings/bonusOpportunitiesEnabled').set(e.target.checked);
+document.getElementById('bonusForm').onsubmit=async e=>{
+ e.preventDefault();const desc=bdesc.value.trim(),val=parseFloat(bval.value);
+ const tasks=data.parentSettings?.bonusTasks||[],newTot=tasks.reduce((s,t)=>s+t.value,0)+val;
+ if(newTot>2)return alert("Weekly bonus cannot exceed $2");tasks.push({desc,value:val});
+ await db.ref('parentSettings/bonusTasks').set(tasks);e.target.reset();};
+window.delBonus=async idx=>{const t=data.parentSettings.bonusTasks;t.splice(idx,1);
+ await db.ref('parentSettings/bonusTasks').set(t);};
+</script>
+</body></html>
