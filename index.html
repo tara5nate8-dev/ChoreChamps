@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <style> body {{ font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; }} </style>
+  <style> body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; } </style>
   <!-- Firebase compat SDKs -->
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
@@ -25,13 +25,10 @@
     </nav>
   </header>
 
-  <section class="grid md:grid-cols-2 gap-4" id="cards">
-    <!-- Cards injected here -->
-  </section>
+  <section class="grid md:grid-cols-2 gap-4" id="cards"></section>
 </main>
 <script>
-// --- Firebase config (update only if your project changes) ---
-const firebaseConfig = {{
+const firebaseConfig = {
   apiKey: "AIzaSyDGzTazPvOiEhTDPg5jyIO17pfv9lCM3OI",
   authDomain: "chore-chart-2.firebaseapp.com",
   databaseURL: "https://parsell-family-chore-chart-default-rtdb.firebaseio.com",
@@ -39,40 +36,38 @@ const firebaseConfig = {{
   storageBucket: "chore-chart-2.appspot.com",
   messagingSenderId: "881327854483",
   appId: "1:881327854483:web:b6f10033c0840a1ccb8e66"
-}};
+};
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
-// Global helpers
 const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-function prettyName(base){{ return base.replace(/([A-Z])/g, m=>' '+m).trim(); }}
+function prettyName(base){ return base.replace(/([A-Z])/g, m=>' '+m).trim(); }
 </script>
 
 <script>
-// Tunable weekly targets (keep your old logic: two buckets)
-const REQUIRED = {{
-  liam:   {{ personal: 10, shared: 5 }},
-  maggie: {{ personal: 10, shared: 5 }}
-}};
+const REQUIRED = {
+  liam:   { personal: 10, shared: 5 },
+  maggie: { personal: 10, shared: 5 }
+};
 
-function splitChoresFor(chores, child){{
+function splitChoresFor(chores, child){
   const other = child==='liam' ? 'maggie' : 'liam';
   const mine = Object.entries(chores)
     .filter(([k]) => k.startsWith(child))
-    .map(([k,v]) => {{
+    .map(([k,v]) => {
       const base = k.replace(/^liam|^maggie/,'');
       const shared = !!chores[other + base];
-      return {{ key:k, base, value:v, shared }};
-    }});
-  return {{
+      return { key:k, base, value:v, shared };
+    });
+  return {
     personal: mine.filter(c=>!c.shared),
     shared:   mine.filter(c=> c.shared)
-  }};
-}}
-function countDone(list){{
+  };
+}
+function countDone(list){
   return list.reduce((s,c)=> s + (Array.isArray(c.value) ? c.value.filter(Boolean).length : (c.value?1:0)), 0);
-}}
+}
 
-function render(chores){{
+function render(chores){
   const liam = splitChoresFor(chores, 'liam');
   const mag  = splitChoresFor(chores, 'maggie');
 
@@ -80,31 +75,31 @@ function render(chores){{
   const mPersonal = countDone(mag.personal),  mShared = countDone(mag.shared);
 
   const cards = [
-    {{ name:'Liam',   p:lPersonal, s:lShared, req:REQUIRED.liam   }},
-    {{ name:'Maggie', p:mPersonal, s:mShared, req:REQUIRED.maggie }}
+    { name:'Liam',   p:lPersonal, s:lShared, req:REQUIRED.liam   },
+    { name:'Maggie', p:mPersonal, s:mShared, req:REQUIRED.maggie }
   ];
   const html = cards.map(c => `
     <div class="bg-white border rounded-2xl shadow p-5">
       <div class="flex items-center justify-between">
-        <h2 class="text-xl font-semibold">🏆 ${{c.name}}</h2>
-        <a class="text-sm text-blue-600 underline" href="${{c.name.toLowerCase()}}.html">Open dashboard →</a>
+        <h2 class="text-xl font-semibold">🏆 ${c.name}</h2>
+        <a class="text-sm text-blue-600 underline" href="${c.name.toLowerCase()}.html">Open dashboard →</a>
       </div>
       <div class="mt-4 grid grid-cols-2 gap-3">
         <div class="bg-gray-50 rounded-xl p-4">
           <div class="text-gray-600 text-sm">Personal done</div>
-          <div class="text-2xl font-bold">${{c.p}} / ${{c.req.personal}}</div>
+          <div class="text-2xl font-bold">${c.p} / ${c.req.personal}</div>
         </div>
         <div class="bg-gray-50 rounded-xl p-4">
           <div class="text-gray-600 text-sm">Shared done</div>
-          <div class="text-2xl font-bold">${{c.s}} / ${{c.req.shared}}</div>
+          <div class="text-2xl font-bold">${c.s} / ${c.req.shared}</div>
         </div>
       </div>
-      <div class="mt-3 text-sm">Left to goal: <b>${{Math.max(c.req.personal - c.p,0)}}</b> personal,
-        <b>${{Math.max(c.req.shared - c.s,0)}}</b> shared.</div>
+      <div class="mt-3 text-sm">Left to goal: <b>${Math.max(c.req.personal - c.p,0)}</b> personal,
+        <b>${Math.max(c.req.shared - c.s,0)}</b> shared.</div>
     </div>`).join('');
   document.getElementById('cards').innerHTML = html;
-}}
+}
 
-db.ref('choreData/chores').on('value', s => render(s.val()||{{}}));
+db.ref('choreData/chores').on('value', s => render(s.val()||{}));
 </script>
 </body></html>
