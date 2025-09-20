@@ -1,105 +1,149 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ChoreChamps</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <style> body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; } </style>
-  <!-- Firebase compat SDKs -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Family Chore Chart Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        .float-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
 </head>
-<body class="bg-gray-50">
-
-<main class="max-w-5xl mx-auto p-6 space-y-6">
-  <header class="flex items-center justify-between">
-    <h1 class="text-3xl font-extrabold">🏠 ChoreChamps — Home</h1>
-    <nav class="space-x-2">
-      <a class="px-3 py-2 bg-white shadow rounded-xl border" href="liam.html">Liam</a>
-      <a class="px-3 py-2 bg-white shadow rounded-xl border" href="maggie.html">Maggie</a>
-      <a class="px-3 py-2 bg-white shadow rounded-xl border" href="parent.html">Parent</a>
-    </nav>
-  </header>
-
-  <section class="grid md:grid-cols-2 gap-4" id="cards"></section>
-</main>
-<script>
-const firebaseConfig = {
-  apiKey: "AIzaSyDGzTazPvOiEhTDPg5jyIO17pfv9lCM3OI",
-  authDomain: "chore-chart-2.firebaseapp.com",
-  databaseURL: "https://parsell-family-chore-chart-default-rtdb.firebaseio.com",
-  projectId: "chore-chart-2",
-  storageBucket: "chore-chart-2.appspot.com",
-  messagingSenderId: "881327854483",
-  appId: "1:881327854483:web:b6f10033c0840a1ccb8e66"
-};
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-function prettyName(base){ return base.replace(/([A-Z])/g, m=>' '+m).trim(); }
-</script>
-
-<script>
-const REQUIRED = {
-  liam:   { personal: 10, shared: 5 },
-  maggie: { personal: 10, shared: 5 }
-};
-
-function splitChoresFor(chores, child){
-  const other = child==='liam' ? 'maggie' : 'liam';
-  const mine = Object.entries(chores)
-    .filter(([k]) => k.startsWith(child))
-    .map(([k,v]) => {
-      const base = k.replace(/^liam|^maggie/,'');
-      const shared = !!chores[other + base];
-      return { key:k, base, value:v, shared };
-    });
-  return {
-    personal: mine.filter(c=>!c.shared),
-    shared:   mine.filter(c=> c.shared)
-  };
-}
-function countDone(list){
-  return list.reduce((s,c)=> s + (Array.isArray(c.value) ? c.value.filter(Boolean).length : (c.value?1:0)), 0);
-}
-
-function render(chores){
-  const liam = splitChoresFor(chores, 'liam');
-  const mag  = splitChoresFor(chores, 'maggie');
-
-  const lPersonal = countDone(liam.personal), lShared = countDone(liam.shared);
-  const mPersonal = countDone(mag.personal),  mShared = countDone(mag.shared);
-
-  const cards = [
-    { name:'Liam',   p:lPersonal, s:lShared, req:REQUIRED.liam   },
-    { name:'Maggie', p:mPersonal, s:mShared, req:REQUIRED.maggie }
-  ];
-  const html = cards.map(c => `
-    <div class="bg-white border rounded-2xl shadow p-5">
-      <div class="flex items-center justify-between">
-        <h2 class="text-xl font-semibold">🏆 ${c.name}</h2>
-        <a class="text-sm text-blue-600 underline" href="${c.name.toLowerCase()}.html">Open dashboard →</a>
-      </div>
-      <div class="mt-4 grid grid-cols-2 gap-3">
-        <div class="bg-gray-50 rounded-xl p-4">
-          <div class="text-gray-600 text-sm">Personal done</div>
-          <div class="text-2xl font-bold">${c.p} / ${c.req.personal}</div>
+<body class="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-12 mt-8">
+            <h1 class="text-5xl font-bold text-gray-800 mb-4">
+                <span class="float-animation inline-block">👨‍👩‍👧‍👦</span>
+                Family Chore Chart Hub
+            </h1>
+            <p class="text-xl text-gray-600">Choose your dashboard to get started!</p>
+            <div class="mt-4 text-sm text-gray-500" id="current-time"></div>
         </div>
-        <div class="bg-gray-50 rounded-xl p-4">
-          <div class="text-gray-600 text-sm">Shared done</div>
-          <div class="text-2xl font-bold">${c.s} / ${c.req.shared}</div>
-        </div>
-      </div>
-      <div class="mt-3 text-sm">Left to goal: <b>${Math.max(c.req.personal - c.p,0)}</b> personal,
-        <b>${Math.max(c.req.shared - c.s,0)}</b> shared.</div>
-    </div>`).join('');
-  document.getElementById('cards').innerHTML = html;
-}
 
-db.ref('choreData/chores').on('value', s => render(s.val()||{}));
-</script>
-</body></html>
+        <!-- Dashboard Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            <!-- Liam's Dashboard -->
+            <a href="liam.html" class="card-hover block">
+                <div class="bg-white rounded-2xl p-8 border-2 border-blue-200 hover:border-blue-400">
+                    <div class="text-center">
+                        <div class="text-6xl mb-4">🎻</div>
+                        <h2 class="text-2xl font-bold text-blue-700 mb-2">Liam's Dashboard</h2>
+                        <p class="text-gray-600 mb-4">Track your chores and earn your allowance!</p>
+                        <div class="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg inline-block">
+                            Enter Dashboard →
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Maggie's Dashboard -->
+            <a href="maggie.html" class="card-hover block">
+                <div class="bg-white rounded-2xl p-8 border-2 border-pink-200 hover:border-pink-400">
+                    <div class="text-center">
+                        <div class="text-6xl mb-4">🤸‍♀️</div>
+                        <h2 class="text-2xl font-bold text-pink-700 mb-2">Maggie's Dashboard</h2>
+                        <p class="text-gray-600 mb-4">Track your chores and earn your allowance!</p>
+                        <div class="bg-pink-100 text-pink-700 px-4 py-2 rounded-lg inline-block">
+                            Enter Dashboard →
+                        </div>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Parent Dashboard -->
+            <a href="parent.html" class="card-hover block">
+                <div class="bg-white rounded-2xl p-8 border-2 border-green-200 hover:border-green-400">
+                    <div class="text-center">
+                        <div class="text-6xl mb-4">👨‍👩‍👧‍👦</div>
+                        <h2 class="text-2xl font-bold text-green-700 mb-2">Parent Dashboard</h2>
+                        <p class="text-gray-600 mb-4">Manage tasks, track progress, and view analytics</p>
+                        <div class="bg-green-100 text-green-700 px-4 py-2 rounded-lg inline-block">
+                            Enter Dashboard →
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="bg-white rounded-2xl p-6 border-2 border-gray-200">
+            <h3 class="text-xl font-bold mb-4 text-center">📊 This Week at a Glance</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-blue-50 p-4 rounded-lg text-center">
+                    <div class="text-3xl mb-2">🎻</div>
+                    <div class="font-semibold text-blue-700">Liam</div>
+                    <div class="text-sm text-gray-600">Check dashboard for status</div>
+                </div>
+                <div class="bg-pink-50 p-4 rounded-lg text-center">
+                    <div class="text-3xl mb-2">🤸‍♀️</div>
+                    <div class="font-semibold text-pink-700">Maggie</div>
+                    <div class="text-sm text-gray-600">Check dashboard for status</div>
+                </div>
+                <div class="bg-yellow-50 p-4 rounded-lg text-center">
+                    <div class="text-3xl mb-2">⭐</div>
+                    <div class="font-semibold text-yellow-700">Bonus Tasks</div>
+                    <div class="text-sm text-gray-600">Ask parents to enable</div>
+                </div>
+                <div class="bg-green-50 p-4 rounded-lg text-center">
+                    <div class="text-3xl mb-2">💰</div>
+                    <div class="font-semibold text-green-700">Weekly Total</div>
+                    <div class="text-sm text-gray-600">Up to $10.00 + bonuses</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center mt-8 text-gray-500 text-sm">
+            <p>Remember: Complete all your tasks to earn your weekly allowance!</p>
+            <p class="mt-2">Made with ❤️ for the family</p>
+        </div>
+    </div>
+
+    <script>
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit'
+            });
+            document.getElementById('current-time').textContent = timeString;
+        }
+
+        // Update time immediately and then every minute
+        updateTime();
+        setInterval(updateTime, 60000);
+
+        // Add some interactive effects
+        document.querySelectorAll('.card-hover').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.querySelector('.text-6xl').style.transform = 'scale(1.2)';
+                this.querySelector('.text-6xl').style.transition = 'transform 0.3s ease';
+            });
+
+            card.addEventListener('mouseleave', function() {
+                this.querySelector('.text-6xl').style.transform = 'scale(1)';
+            });
+        });
+    </script>
+</body>
+</html>
+
