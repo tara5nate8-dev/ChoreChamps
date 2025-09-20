@@ -15,50 +15,18 @@
 </head>
 <body class="bg-gray-50">
 
-<main class="max-w-6xl mx-auto p-6 space-y-6">
+<main class="max-w-5xl mx-auto p-6 space-y-6">
   <header class="flex items-center justify-between">
-    <h1 class="text-3xl font-extrabold">👨‍👩‍👧‍👦 Parent Console</h1>
+    <h1 class="text-3xl font-extrabold">🏠 ChoreChamps — Home</h1>
     <nav class="space-x-2">
-      <a class="px-3 py-2 bg-white shadow rounded-xl border" href="index.html">Home</a>
       <a class="px-3 py-2 bg-white shadow rounded-xl border" href="liam.html">Liam</a>
       <a class="px-3 py-2 bg-white shadow rounded-xl border" href="maggie.html">Maggie</a>
+      <a class="px-3 py-2 bg-white shadow rounded-xl border" href="parent.html">Parent</a>
     </nav>
   </header>
 
-  <section class="grid md:grid-cols-2 gap-6">
-    <div class="bg-white rounded-2xl border shadow p-5">
-      <h2 class="text-xl font-semibold mb-3">➕ Add a chore</h2>
-      <form id="addForm" class="space-y-3">
-        <label class="block">Chore name
-          <input id="cname" required class="mt-1 w-full border rounded-xl px-3 py-2" placeholder="Feed Dog">
-        </label>
-        <label class="block">Scope
-          <select id="ctype" class="mt-1 w-full border rounded-xl px-3 py-2">
-            <option value="shared">Shared (both)</option>
-            <option value="personal-liam">Personal — Liam</option>
-            <option value="personal-maggie">Personal — Maggie</option>
-          </select>
-        </label>
-        <label class="block">Pattern
-          <select id="ctype2" class="mt-1 w-full border rounded-xl px-3 py-2">
-            <option value="array7">Weekly grid (Sun–Sat)</option>
-            <option value="bool">Single weekly toggle</option>
-          </select>
-        </label>
-        <button class="px-4 py-2 bg-blue-600 text-white rounded-xl">Add chore</button>
-      </form>
-    </div>
-
-    <div class="bg-white rounded-2xl border shadow p-5">
-      <h2 class="text-xl font-semibold mb-3">🧹 Maintenance</h2>
-      <button id="resetWeek" class="px-4 py-2 bg-gray-800 text-white rounded-xl">Reset week (set all to unchecked)</button>
-      <p class="text-sm text-gray-500 mt-2">Resets arrays and booleans under <code>choreData/chores/*</code>.</p>
-    </div>
-  </section>
-
-  <section class="bg-white rounded-2xl border shadow p-5">
-    <h2 class="text-xl font-semibold mb-3">🗂 Chore list</h2>
-    <div id="catalogue" class="overflow-x-auto"></div>
+  <section class="grid md:grid-cols-2 gap-4" id="cards">
+    <!-- Cards injected here -->
   </section>
 </main>
 <script>
@@ -80,133 +48,63 @@ function prettyName(base){{ return base.replace(/([A-Z])/g, m=>' '+m).trim(); }}
 </script>
 
 <script>
-let chores = {};
+// Tunable weekly targets (keep your old logic: two buckets)
+const REQUIRED = {{
+  liam:   {{ personal: 10, shared: 5 }},
+  maggie: {{ personal: 10, shared: 5 }}
+}};
 
-function keyBaseFromName(name){ return name.replace(/\W+/g,''); }
-function groupChores(snapshot){
-  const obj = snapshot || {};
-  const keys = Object.keys(obj);
-  const records = keys.map(k => {
-    const base = k.replace(/^liam|^maggie/,'');
-    const owner = k.startsWith('liam') ? 'liam' : 'maggie';
-    const other = owner==='liam' ? 'maggie' : 'liam';
-    const shared = obj[other + base] != null;
-    return { key:k, base, owner, shared, value: obj[k] };
-  });
-  const shared = [];
-  const personal = { liam:[], maggie:[] };
-  const seenShared = new Set();
-  for (const r of records){
-    if (r.shared){
-      const sharedKey = r.base;
-      if (!seenShared.has(sharedKey)){
-        shared.push({
-          base: r.base,
-          liamKey:  'liam'+r.base,
-          maggieKey:'maggie'+r.base,
-          liamVal: obj['liam'+r.base],
-          maggieVal: obj['maggie'+r.base]
-        });
-        seenShared.add(sharedKey);
-      }
-    } else {
-      personal[r.owner].push(r);
-    }
-  }
-  return { shared, personal };
-}
+function splitChoresFor(chores, child){{
+  const other = child==='liam' ? 'maggie' : 'liam';
+  const mine = Object.entries(chores)
+    .filter(([k]) => k.startsWith(child))
+    .map(([k,v]) => {{
+      const base = k.replace(/^liam|^maggie/,'');
+      const shared = !!chores[other + base];
+      return {{ key:k, base, value:v, shared }};
+    }});
+  return {{
+    personal: mine.filter(c=>!c.shared),
+    shared:   mine.filter(c=> c.shared)
+  }};
+}}
+function countDone(list){{
+  return list.reduce((s,c)=> s + (Array.isArray(c.value) ? c.value.filter(Boolean).length : (c.value?1:0)), 0);
+}}
 
-function renderCatalogue(){
-  const { shared, personal } = groupChores(chores);
-  const sharedRows = shared.map(s => `
-    <tr class="border-b">
-      <td class="py-2">🤝 ${prettyName(s.base)}</td>
-      <td class="text-gray-500">Shared</td>
-      <td class="text-right">
-        <button class="px-2 py-1 bg-red-600 text-white rounded" onclick="deleteShared('${s.base}')">Delete both</button>
-      </td>
-    </tr>`).join('');
+function render(chores){{
+  const liam = splitChoresFor(chores, 'liam');
+  const mag  = splitChoresFor(chores, 'maggie');
 
-  const pRowsL = personal.liam.map(r => `
-    <tr class="border-b">
-      <td class="py-2">🎻 ${prettyName(r.base)}</td>
-      <td class="text-gray-500">Liam</td>
-      <td class="text-right">
-        <button class="px-2 py-1 bg-red-600 text-white rounded" onclick="deleteOne('${r.key}')">Delete</button>
-      </td>
-    </tr>`).join('');
+  const lPersonal = countDone(liam.personal), lShared = countDone(liam.shared);
+  const mPersonal = countDone(mag.personal),  mShared = countDone(mag.shared);
 
-  const pRowsM = personal.maggie.map(r => `
-    <tr class="border-b">
-      <td class="py-2">🤸‍♀️ ${prettyName(r.base)}</td>
-      <td class="text-gray-500">Maggie</td>
-      <td class="text-right">
-        <button class="px-2 py-1 bg-red-600 text-white rounded" onclick="deleteOne('${r.key}')">Delete</button>
-      </td>
-    </tr>`).join('');
+  const cards = [
+    {{ name:'Liam',   p:lPersonal, s:lShared, req:REQUIRED.liam   }},
+    {{ name:'Maggie', p:mPersonal, s:mShared, req:REQUIRED.maggie }}
+  ];
+  const html = cards.map(c => `
+    <div class="bg-white border rounded-2xl shadow p-5">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-semibold">🏆 ${{c.name}}</h2>
+        <a class="text-sm text-blue-600 underline" href="${{c.name.toLowerCase()}}.html">Open dashboard →</a>
+      </div>
+      <div class="mt-4 grid grid-cols-2 gap-3">
+        <div class="bg-gray-50 rounded-xl p-4">
+          <div class="text-gray-600 text-sm">Personal done</div>
+          <div class="text-2xl font-bold">${{c.p}} / ${{c.req.personal}}</div>
+        </div>
+        <div class="bg-gray-50 rounded-xl p-4">
+          <div class="text-gray-600 text-sm">Shared done</div>
+          <div class="text-2xl font-bold">${{c.s}} / ${{c.req.shared}}</div>
+        </div>
+      </div>
+      <div class="mt-3 text-sm">Left to goal: <b>${{Math.max(c.req.personal - c.p,0)}}</b> personal,
+        <b>${{Math.max(c.req.shared - c.s,0)}}</b> shared.</div>
+    </div>`).join('');
+  document.getElementById('cards').innerHTML = html;
+}}
 
-  document.getElementById('catalogue').innerHTML = `
-    <table class="min-w-full text-sm">
-      <thead class="bg-gray-50"><tr><th class="text-left">Chore</th><th>Owner</th><th></th></tr></thead>
-      <tbody>
-        ${sharedRows || ''}
-        ${pRowsL || ''}
-        ${pRowsM || ''}
-        ${(!sharedRows && !pRowsL && !pRowsM) ? '<tr><td colspan="3" class="p-3 text-gray-500">No chores yet.</td></tr>' : ''}
-      </tbody>
-    </table>`;
-}
-
-window.deleteShared = async (base) => {
-  if (!confirm('Delete this shared chore for both kids?')) return;
-  const upd = {};
-  upd[`choreData/chores/liam${base}`] = null;
-  upd[`choreData/chores/maggie${base}`] = null;
-  await db.ref().update(upd);
-};
-
-window.deleteOne = async (key) => {
-  if (!confirm('Delete this chore?')) return;
-  const upd = {}; upd[`choreData/chores/${key}`] = null;
-  await db.ref().update(upd);
-};
-
-document.getElementById('addForm').onsubmit = async e => {
-  e.preventDefault();
-  const name  = document.getElementById('cname').value.trim();
-  const scope = document.getElementById('ctype').value;         // shared | personal-liam | personal-maggie
-  const pattern = document.getElementById('ctype2').value;      // array7 | bool
-  if (!name) return;
-
-  const base = keyBaseFromName(name);
-  const blank = (pattern==='array7') ? Array(7).fill(false) : false;
-
-  const keys = scope==='shared' ? [`liam${base}`, `maggie${base}`]
-              : [scope==='personal-liam' ? `liam${base}` : `maggie${base}`];
-
-  // duplicate guard
-  const snap = await db.ref('choreData/chores').get();
-  const cur = snap.val()||{};
-  if (keys.some(k => k in cur)) { alert('A chore with that name already exists in that scope.'); return; }
-
-  const upd = {}; keys.forEach(k => upd[`choreData/chores/${k}`] = blank);
-  await db.ref().update(upd);
-  e.target.reset();
-};
-
-document.getElementById('resetWeek').onclick = async () => {
-  if (!confirm('Reset all chores for this week?')) return;
-  const snap = await db.ref('choreData/chores').get();
-  const cur = snap.val()||{};
-  const upd = {};
-  Object.entries(cur).forEach(([k,v]) => {
-    if (Array.isArray(v)) upd[`choreData/chores/${k}`] = Array(7).fill(false);
-    else upd[`choreData/chores/${k}`] = false;
-  });
-  await db.ref().update(upd);
-};
-
-db.ref('choreData/chores').on('value', s => { chores = s.val()||{}; renderCatalogue(); });
+db.ref('choreData/chores').on('value', s => render(s.val()||{{}}));
 </script>
 </body></html>
-
