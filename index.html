@@ -1,148 +1,212 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Family Chore Chart Hub</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        .card-hover:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-        .card-hover {
-            transition: all 0.3s ease;
-        }
-        @keyframes float {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
-        }
-        .float-animation {
-            animation: float 3s ease-in-out infinite;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ChoreChamps</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style> body {{ font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; }} </style>
+  <!-- Firebase compat SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 p-4">
-    <div class="max-w-6xl mx-auto">
-        <!-- Header -->
-        <div class="text-center mb-12 mt-8">
-            <h1 class="text-5xl font-bold text-gray-800 mb-4">
-                <span class="float-animation inline-block">👨‍👩‍👧‍👦</span>
-                Family Chore Chart Hub
-            </h1>
-            <p class="text-xl text-gray-600">Choose your dashboard to get started!</p>
-            <div class="mt-4 text-sm text-gray-500" id="current-time"></div>
-        </div>
+<body class="bg-gray-50">
 
-        <!-- Dashboard Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            <!-- Liam's Dashboard -->
-            <a href="liam.html" class="card-hover block">
-                <div class="bg-white rounded-2xl p-8 border-2 border-blue-200 hover:border-blue-400">
-                    <div class="text-center">
-                        <div class="text-6xl mb-4">🎻</div>
-                        <h2 class="text-2xl font-bold text-blue-700 mb-2">Liam's Dashboard</h2>
-                        <p class="text-gray-600 mb-4">Track your chores and earn your allowance!</p>
-                        <div class="bg-blue-100 text-blue-700 px-4 py-2 rounded-lg inline-block">
-                            Enter Dashboard →
-                        </div>
-                    </div>
-                </div>
-            </a>
+<main class="max-w-6xl mx-auto p-6 space-y-6">
+  <header class="flex items-center justify-between">
+    <h1 class="text-3xl font-extrabold">👨‍👩‍👧‍👦 Parent Console</h1>
+    <nav class="space-x-2">
+      <a class="px-3 py-2 bg-white shadow rounded-xl border" href="index.html">Home</a>
+      <a class="px-3 py-2 bg-white shadow rounded-xl border" href="liam.html">Liam</a>
+      <a class="px-3 py-2 bg-white shadow rounded-xl border" href="maggie.html">Maggie</a>
+    </nav>
+  </header>
 
-            <!-- Maggie's Dashboard -->
-            <a href="maggie.html" class="card-hover block">
-                <div class="bg-white rounded-2xl p-8 border-2 border-pink-200 hover:border-pink-400">
-                    <div class="text-center">
-                        <div class="text-6xl mb-4">🤸‍♀️</div>
-                        <h2 class="text-2xl font-bold text-pink-700 mb-2">Maggie's Dashboard</h2>
-                        <p class="text-gray-600 mb-4">Track your chores and earn your allowance!</p>
-                        <div class="bg-pink-100 text-pink-700 px-4 py-2 rounded-lg inline-block">
-                            Enter Dashboard →
-                        </div>
-                    </div>
-                </div>
-            </a>
-
-            <!-- Parent Dashboard -->
-            <a href="parent.html" class="card-hover block">
-                <div class="bg-white rounded-2xl p-8 border-2 border-green-200 hover:border-green-400">
-                    <div class="text-center">
-                        <div class="text-6xl mb-4">👨‍👩‍👧‍👦</div>
-                        <h2 class="text-2xl font-bold text-green-700 mb-2">Parent Dashboard</h2>
-                        <p class="text-gray-600 mb-4">Manage tasks, track progress, and view analytics</p>
-                        <div class="bg-green-100 text-green-700 px-4 py-2 rounded-lg inline-block">
-                            Enter Dashboard →
-                        </div>
-                    </div>
-                </div>
-            </a>
-        </div>
-
-        <!-- Quick Stats -->
-        <div class="bg-white rounded-2xl p-6 border-2 border-gray-200">
-            <h3 class="text-xl font-bold mb-4 text-center">📊 This Week at a Glance</h3>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-blue-50 p-4 rounded-lg text-center">
-                    <div class="text-3xl mb-2">🎻</div>
-                    <div class="font-semibold text-blue-700">Liam</div>
-                    <div class="text-sm text-gray-600">Check dashboard for status</div>
-                </div>
-                <div class="bg-pink-50 p-4 rounded-lg text-center">
-                    <div class="text-3xl mb-2">🤸‍♀️</div>
-                    <div class="font-semibold text-pink-700">Maggie</div>
-                    <div class="text-sm text-gray-600">Check dashboard for status</div>
-                </div>
-                <div class="bg-yellow-50 p-4 rounded-lg text-center">
-                    <div class="text-3xl mb-2">⭐</div>
-                    <div class="font-semibold text-yellow-700">Bonus Tasks</div>
-                    <div class="text-sm text-gray-600">Ask parents to enable</div>
-                </div>
-                <div class="bg-green-50 p-4 rounded-lg text-center">
-                    <div class="text-3xl mb-2">💰</div>
-                    <div class="font-semibold text-green-700">Weekly Total</div>
-                    <div class="text-sm text-gray-600">Up to $10.00 + bonuses</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="text-center mt-8 text-gray-500 text-sm">
-            <p>Remember: Complete all your tasks to earn your weekly allowance!</p>
-            <p class="mt-2">Made with ❤️ for the family</p>
-        </div>
+  <section class="grid md:grid-cols-2 gap-6">
+    <div class="bg-white rounded-2xl border shadow p-5">
+      <h2 class="text-xl font-semibold mb-3">➕ Add a chore</h2>
+      <form id="addForm" class="space-y-3">
+        <label class="block">Chore name
+          <input id="cname" required class="mt-1 w-full border rounded-xl px-3 py-2" placeholder="Feed Dog">
+        </label>
+        <label class="block">Scope
+          <select id="ctype" class="mt-1 w-full border rounded-xl px-3 py-2">
+            <option value="shared">Shared (both)</option>
+            <option value="personal-liam">Personal — Liam</option>
+            <option value="personal-maggie">Personal — Maggie</option>
+          </select>
+        </label>
+        <label class="block">Pattern
+          <select id="ctype2" class="mt-1 w-full border rounded-xl px-3 py-2">
+            <option value="array7">Weekly grid (Sun–Sat)</option>
+            <option value="bool">Single weekly toggle</option>
+          </select>
+        </label>
+        <button class="px-4 py-2 bg-blue-600 text-white rounded-xl">Add chore</button>
+      </form>
     </div>
 
-    <script>
-        function updateTime() {
-            const now = new Date();
-            const timeString = now.toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric',
-                hour: 'numeric',
-                minute: '2-digit'
-            });
-            document.getElementById('current-time').textContent = timeString;
-        }
+    <div class="bg-white rounded-2xl border shadow p-5">
+      <h2 class="text-xl font-semibold mb-3">🧹 Maintenance</h2>
+      <button id="resetWeek" class="px-4 py-2 bg-gray-800 text-white rounded-xl">Reset week (set all to unchecked)</button>
+      <p class="text-sm text-gray-500 mt-2">Resets arrays and booleans under <code>choreData/chores/*</code>.</p>
+    </div>
+  </section>
 
-        // Update time immediately and then every minute
-        updateTime();
-        setInterval(updateTime, 60000);
+  <section class="bg-white rounded-2xl border shadow p-5">
+    <h2 class="text-xl font-semibold mb-3">🗂 Chore list</h2>
+    <div id="catalogue" class="overflow-x-auto"></div>
+  </section>
+</main>
+<script>
+// --- Firebase config (update only if your project changes) ---
+const firebaseConfig = {{
+  apiKey: "AIzaSyDGzTazPvOiEhTDPg5jyIO17pfv9lCM3OI",
+  authDomain: "chore-chart-2.firebaseapp.com",
+  databaseURL: "https://parsell-family-chore-chart-default-rtdb.firebaseio.com",
+  projectId: "chore-chart-2",
+  storageBucket: "chore-chart-2.appspot.com",
+  messagingSenderId: "881327854483",
+  appId: "1:881327854483:web:b6f10033c0840a1ccb8e66"
+}};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+// Global helpers
+const DAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+function prettyName(base){{ return base.replace(/([A-Z])/g, m=>' '+m).trim(); }}
+</script>
 
-        // Add some interactive effects
-        document.querySelectorAll('.card-hover').forEach(card => {
-            card.addEventListener('mouseenter', function() {
-                this.querySelector('.text-6xl').style.transform = 'scale(1.2)';
-                this.querySelector('.text-6xl').style.transition = 'transform 0.3s ease';
-            });
+<script>
+let chores = {};
 
-            card.addEventListener('mouseleave', function() {
-                this.querySelector('.text-6xl').style.transform = 'scale(1)';
-            });
+function keyBaseFromName(name){ return name.replace(/\W+/g,''); }
+function groupChores(snapshot){
+  const obj = snapshot || {};
+  const keys = Object.keys(obj);
+  const records = keys.map(k => {
+    const base = k.replace(/^liam|^maggie/,'');
+    const owner = k.startsWith('liam') ? 'liam' : 'maggie';
+    const other = owner==='liam' ? 'maggie' : 'liam';
+    const shared = obj[other + base] != null;
+    return { key:k, base, owner, shared, value: obj[k] };
+  });
+  const shared = [];
+  const personal = { liam:[], maggie:[] };
+  const seenShared = new Set();
+  for (const r of records){
+    if (r.shared){
+      const sharedKey = r.base;
+      if (!seenShared.has(sharedKey)){
+        shared.push({
+          base: r.base,
+          liamKey:  'liam'+r.base,
+          maggieKey:'maggie'+r.base,
+          liamVal: obj['liam'+r.base],
+          maggieVal: obj['maggie'+r.base]
         });
-    </script>
-</body>
-</html>
+        seenShared.add(sharedKey);
+      }
+    } else {
+      personal[r.owner].push(r);
+    }
+  }
+  return { shared, personal };
+}
+
+function renderCatalogue(){
+  const { shared, personal } = groupChores(chores);
+  const sharedRows = shared.map(s => `
+    <tr class="border-b">
+      <td class="py-2">🤝 ${prettyName(s.base)}</td>
+      <td class="text-gray-500">Shared</td>
+      <td class="text-right">
+        <button class="px-2 py-1 bg-red-600 text-white rounded" onclick="deleteShared('${s.base}')">Delete both</button>
+      </td>
+    </tr>`).join('');
+
+  const pRowsL = personal.liam.map(r => `
+    <tr class="border-b">
+      <td class="py-2">🎻 ${prettyName(r.base)}</td>
+      <td class="text-gray-500">Liam</td>
+      <td class="text-right">
+        <button class="px-2 py-1 bg-red-600 text-white rounded" onclick="deleteOne('${r.key}')">Delete</button>
+      </td>
+    </tr>`).join('');
+
+  const pRowsM = personal.maggie.map(r => `
+    <tr class="border-b">
+      <td class="py-2">🤸‍♀️ ${prettyName(r.base)}</td>
+      <td class="text-gray-500">Maggie</td>
+      <td class="text-right">
+        <button class="px-2 py-1 bg-red-600 text-white rounded" onclick="deleteOne('${r.key}')">Delete</button>
+      </td>
+    </tr>`).join('');
+
+  document.getElementById('catalogue').innerHTML = `
+    <table class="min-w-full text-sm">
+      <thead class="bg-gray-50"><tr><th class="text-left">Chore</th><th>Owner</th><th></th></tr></thead>
+      <tbody>
+        ${sharedRows || ''}
+        ${pRowsL || ''}
+        ${pRowsM || ''}
+        ${(!sharedRows && !pRowsL && !pRowsM) ? '<tr><td colspan="3" class="p-3 text-gray-500">No chores yet.</td></tr>' : ''}
+      </tbody>
+    </table>`;
+}
+
+window.deleteShared = async (base) => {
+  if (!confirm('Delete this shared chore for both kids?')) return;
+  const upd = {};
+  upd[`choreData/chores/liam${base}`] = null;
+  upd[`choreData/chores/maggie${base}`] = null;
+  await db.ref().update(upd);
+};
+
+window.deleteOne = async (key) => {
+  if (!confirm('Delete this chore?')) return;
+  const upd = {}; upd[`choreData/chores/${key}`] = null;
+  await db.ref().update(upd);
+};
+
+document.getElementById('addForm').onsubmit = async e => {
+  e.preventDefault();
+  const name  = document.getElementById('cname').value.trim();
+  const scope = document.getElementById('ctype').value;         // shared | personal-liam | personal-maggie
+  const pattern = document.getElementById('ctype2').value;      // array7 | bool
+  if (!name) return;
+
+  const base = keyBaseFromName(name);
+  const blank = (pattern==='array7') ? Array(7).fill(false) : false;
+
+  const keys = scope==='shared' ? [`liam${base}`, `maggie${base}`]
+              : [scope==='personal-liam' ? `liam${base}` : `maggie${base}`];
+
+  // duplicate guard
+  const snap = await db.ref('choreData/chores').get();
+  const cur = snap.val()||{};
+  if (keys.some(k => k in cur)) { alert('A chore with that name already exists in that scope.'); return; }
+
+  const upd = {}; keys.forEach(k => upd[`choreData/chores/${k}`] = blank);
+  await db.ref().update(upd);
+  e.target.reset();
+};
+
+document.getElementById('resetWeek').onclick = async () => {
+  if (!confirm('Reset all chores for this week?')) return;
+  const snap = await db.ref('choreData/chores').get();
+  const cur = snap.val()||{};
+  const upd = {};
+  Object.entries(cur).forEach(([k,v]) => {
+    if (Array.isArray(v)) upd[`choreData/chores/${k}`] = Array(7).fill(false);
+    else upd[`choreData/chores/${k}`] = false;
+  });
+  await db.ref().update(upd);
+};
+
+db.ref('choreData/chores').on('value', s => { chores = s.val()||{}; renderCatalogue(); });
+</script>
+</body></html>
+
